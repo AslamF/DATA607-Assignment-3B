@@ -1,0 +1,9 @@
+---
+title: "Assignment3BFinal"
+format: html
+editor: visual
+---
+
+## Approach 
+
+I'm using an LLM in particular Claude to generate me a data-set of going to back to 2021 of the 3 largest crypto coins on the market and provide the date and the end closing price of that coin. It generated for each coin and created a csv for me which will be attached in the file and loaded. I will use this data-set to calculate the year-to-date average and the six-day moving averages for the 3 crypto coins.
