@@ -4,6 +4,75 @@ format: html
 editor: visual
 ---
 
-## Approach 
+## Approach
 
 I'm using an LLM in particular Claude to generate me a data-set of going to back to 2021 of the 3 largest crypto coins on the market and provide the date and the end closing price of that coin. It generated for each coin and created a csv for me which will be attached in the file and loaded. I will use this data-set to calculate the year-to-date average and the six-day moving averages for the 3 crypto coins.
+
+```{r}
+library(dplyr)
+library(readr)
+library(lubridate)
+```
+
+## Loading Data
+
+```{r}
+url <- "https://raw.githubusercontent.com/AslamF/DATA607-Assignment-3B/refs/heads/main/cryptoData-Set.csv"
+
+cryptoData <- read.csv(url)
+
+glimpse(cryptoData)
+
+unique(cryptoData$crypto)
+
+range(cryptoData$date)
+```
+
+## Calculations
+
+The Goal of this assignment is to calculate the year to date average and the six day moving averages for each crypto currency
+
+We are going to pipe the data through several operations and save the final as results, which will be used to display the results. Sorting the data by crypto and arranding the data oldest to newest. This is an extra step but good practice. The data was already organized this way by the LLM. year() is a function that comes from the lubridate library. Lag() is critical for determining the 6-day average as it lets use select a value from a previous row. In our data-set a previous row represents a previous day. cumean() is the critical function which lets us calculate year-to date as it provides the running average. In our case it will take the day (out of 365) and take the running total of price per day and find the average.
+
+```{r}
+results <- cryptoData %>%
+  arrange(crypto, date) %>%
+  group_by(crypto) %>%
+  mutate( year = year(date),
+          moving_avg_6day = (
+      close_price +           # Current day
+      lag(close_price, 1) +   # 1 day ago
+      lag(close_price, 2) +   # 2 days ago
+      lag(close_price, 3) +   # 3 days ago
+      lag(close_price, 4) +   # 4 days ago
+      lag(close_price, 5)     # 5 days ago
+    ) / 6
+  ) %>%
+  group_by(crypto, year) %>%
+  mutate(
+    ytd_average = cummean(close_price)
+  ) %>%
+  ungroup()
+
+
+```
+
+## Results
+
+```{r}
+results %>%
+  filter(crypto == "BTC", date >= "2022-01-01", date <= "2022-01-10") %>%
+  select(date, crypto, close_price, moving_avg_6day, ytd_average)
+
+results %>%
+  filter(crypto == "ETH", date >= "2022-01-01", date <= "2022-01-10") %>%
+  select(date, crypto, close_price, moving_avg_6day, ytd_average)
+
+results %>%
+  filter(crypto == "USDT", date >= "2022-01-01", date <= "2022-01-10") %>%
+  select(date, crypto, close_price, moving_avg_6day, ytd_average)
+```
+
+## Conclusion
+
+My first notice is how "useless" the data for USDT appears. Looking at the data it hovers around 1.0 and shifts very slowly. Barely reaches 2.0 over 4-years The data is not very entertaining and it is hard to extract information about the coin itself from the data. This shows me a-lot about the importance on the quality of data. I think in the future, to improve what is being shown I can show yearly changes in crypto currency and monthly changes per year. Its more impactful than seeing every days change. As an investor a 6-day avg is more important than something like a monthly change but the data is more impactful to observe large changes. It really tells me that what you want to use the data for really impact what type of analysis you will do on the data.
